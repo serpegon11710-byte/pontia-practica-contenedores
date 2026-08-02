@@ -1,16 +1,17 @@
 import os
 import logging
 from typing import List
-
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 from datetime import datetime, date
+from contextlib import asynccontextmanager
 
-from sqlalchemy import Boolean, Column, Integer, String, create_engine
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker,Session
 
-app = FastAPI(title="API para gestion de tareas", version="1.0.0")
+from models import TaskCreate, TaskUpdate, TaskResponse
 
 # --- Logging ---
 logging.basicConfig(
@@ -19,13 +20,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Carga las variables del archivo .env al entorno de ejecución
+load_dotenv()
+
+
 # --- DB setup ---
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "postgresql+psycopg2://fastapi_user:secret123@localhost:8500/users"
-)
-engine = create_engine(DATABASE_URL, echo=True)
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+def init_db():
+    DATABASE_URL = f"postgresql+psycopg2://{os.getenv('DATABASE_USER', 'none')}:{os.getenv('DATABASE_PASSWORD', 'none')}@{os.getenv('DATABASE_SERVER', 'none')}:{os.getenv('DATABASE_PORT', 'none')}/{os.getenv('DATABASE_CATALOG', 'none')}"
+    global engine
+    global SessionLocal
+    engine = create_engine(DATABASE_URL, echo=True)
+    SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    Base_db.metadata.create_all(bind=engine)
+
 Base_db = declarative_base()
 
 class Task_db(Base_db):
@@ -34,32 +41,29 @@ class Task_db(Base_db):
 
     titulo = Column(String, index=True, unique=True)
     contenido = Column(String)
-    deadline = Column(String)
+    deadline = Column(DateTime)
     completada = Column(Boolean, default=False)
-    fecha_creacion = Column(String)
-    fecha_modificacion = Column(String, nullable=True)
+    fecha_creacion = Column(DateTime)
+    fecha_modificacion = Column(DateTime, nullable=True)
 
-Base_db.metadata.create_all(bind=engine)
+#FastAPI app with lifespan event to initialize the database
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # --- CÓDIGO DE ARRANQUE (Startup) ---
+    # Aquí lanzas el create_all de manera controlada cuando arranca el servidor
+    try:
+        init_db()
+        print("Base de datos inicializada correctamente en el arranque.")
+    except Exception as e:
+        print(f"Error al conectar o inicializar la BD en el arranque: {e}")
+        # Opcional: puedes decidir si quieres que falle el arranque o no
+        
+    yield  # Aquí es donde FastAPI arranca y empieza a atender peticiones
+    
+    # --- CÓDIGO DE APAGADO (Shutdown) - Opcional ---
+    print("Apagando la aplicación...")
 
-# Modelos Pydantic
-class TaskCreate(BaseModel):
-    titulo: str = Field(min_length=1, description="Título de la tarea")
-    contenido: str = Field(min_length=1, description="Contenido de la tarea")
-    deadline: date = Field(description="Fecha de vencimiento")
-
-class TaskUpdate(BaseModel):
-    id: int = Field(description="ID de la tarea")
-    completada: bool = Field(description="Estado de completado")
-
-class TaskResponse(BaseModel):
-    id: int
-    titulo: str
-    contenido: str
-    deadline: date
-    completada: bool
-    fecha_creacion: datetime
-    fecha_modificacion: datetime | None = None
-
+app = FastAPI(title="API para gestion de tareas", version="1.0.0", lifespan=lifespan)
 
 # TODO: Implementar clase TaskManager con lógica de negocio
 class TaskManager:
@@ -91,7 +95,7 @@ class TaskManager:
         task_db=Task_db(
             titulo=task.titulo,
             contenido=task.contenido,
-            deadline=str(task.deadline),
+            deadline=task.deadline,
             completada=False,
             fecha_creacion=str(datetime.now())
         )

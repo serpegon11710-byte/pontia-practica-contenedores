@@ -3,22 +3,23 @@ services:
     build: 
       context: ./python-api
       no_cache: true     # <-- Esto fuerza a Docker a ignorar la caché al compilar este servicio
-
+    env_file:
+      - .env
     ports:
-      - "8100:8100"
-    environment:
-      - DATABASE_URL=postgresql+psycopg2://fastapi_user:secret123@postgres:5432/users
+      - "${API_PORT}:${API_PORT}"
     networks:
       - my-net
 
   postgres:
     image: postgres:16
+    env_file:
+      - .env
     environment:
-      - POSTGRES_USER=fastapi_user
-      - POSTGRES_PASSWORD=secret123
-      - POSTGRES_DB=users
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_DB=${DATABASE_CATALOG}
     expose:
-      - 5432
+      - ${DATABASE_PORT}
     networks:
       - my-net
     volumes:
