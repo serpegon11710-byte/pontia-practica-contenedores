@@ -12,7 +12,7 @@ Requiere tener instalado docker desktop o estar en u entorno Linux
 docker compose up -d
 ```
 
-La API estará disponible en `http://localhost:8100`
+La API estará disponible en `http://localhost:8080` -- NOTA: el puerto puerto depoenderá de lao configurado en la variable de entorno API_PORT
 
 ## Endpoints
 
@@ -35,8 +35,8 @@ python test_api.py
 ## Documentación interactiva
 
 Una vez ejecutando la aplicación, puedes acceder a:
-- Swagger UI: `http://localhost:8100/docs`
-- ReDoc: `http://localhost:8100/redoc`
+- Swagger UI: `http://localhost:8080/docs`
+- ReDoc: `http://localhost:8080/redoc`
 
 ## Detalles de implementacion
 
