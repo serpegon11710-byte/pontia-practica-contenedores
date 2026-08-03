@@ -36,7 +36,8 @@ jobs:
 
       - name: Start services with Docker Compose
         run: |
-          docker compose -f ./compose.yml up -d --build
+          docker compose -f ./compose_postgres.yml up -d --build
+          docker compose -f ./compose_python.yml up -d --build
 
       - name: Run tests
         run: |

@@ -15,8 +15,8 @@ args = parser.parse_args()
 
 
 current_dir = Path(__file__).resolve().parent
-compose_file_path = current_dir.parent /  "compose.yml"
-print(str(compose_file_path))
+compose_python_file_path = current_dir.parent /  "compose_python.yml"
+compose_postgres_file_path = current_dir.parent /  "compose_postgres.yml"
 
 # Si pasas --verbose, capture_output será False (verás los logs en directo)
 # Si no lo pasas, será True (los oculta/captura en la variable)
@@ -24,8 +24,16 @@ activar_captura = not args.verbose
 
 try:
     # Lanza el comando de docker compose usando el compose.yml
+    print(str(compose_postgres_file_path))
     resultado = subprocess.run(
-        ["docker", "compose", "-f", str(compose_file_path),"-p","python-api", "up", "-d","--build"],
+        ["docker", "compose", "-f", str(compose_postgres_file_path),"-p","python-api", "up", "-d","--build"],
+        check=True,
+        text=True,
+        capture_output=activar_captura
+    )
+    print(str(compose_python_file_path))
+    resultado = subprocess.run(
+        ["docker", "compose", "-f", str(compose_python_file_path),"-p","python-api", "up", "-d","--build"],
         check=True,
         text=True,
         capture_output=activar_captura

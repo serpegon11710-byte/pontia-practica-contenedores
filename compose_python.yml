@@ -1,0 +1,19 @@
+services:
+  python:
+    container_name: python
+    build: 
+      context: ./python-api
+      no_cache: true     # <-- Esto fuerza a Docker a ignorar la caché al compilar este servicio
+    env_file:
+      - .env
+    ports:
+      - "${API_PORT}:8080"
+    volumes:
+      # Mapea tu código fuente local en tiempo real dentro del contenedor
+      - ./python-api/src:/app
+    networks:
+      - my-net
+
+
+networks:
+  my-net:
