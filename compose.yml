@@ -9,7 +9,9 @@ services:
       - "${API_PORT}:${API_PORT}"
     networks:
       - my-net
-
+    depends_on:
+      postgres:
+        condition: service_healthy # <-- Espera a que Postgres responda de verdad
   postgres:
     image: postgres:16
     env_file:
@@ -24,6 +26,11 @@ services:
       - my-net
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 networks:
   my-net:
