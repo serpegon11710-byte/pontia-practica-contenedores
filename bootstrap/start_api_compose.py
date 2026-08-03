@@ -22,7 +22,7 @@ try:
         ["docker", "compose", "-f", str(compose_file_path), "up", "-d"],
         check=True,
         text=True,
-        capture_output=False
+        capture_output=True
     )
     print("¡Contenedores arrancados con éxito!")
     print(resultado.stdout)
